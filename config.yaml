@@ -1,0 +1,37 @@
+seed: 42
+
+data:
+  n_background: 12000
+  n_signal: 2500
+  test_size: 0.3
+
+  background:
+    mean: [0.0, 0.0]
+    cov:
+      - [1.6, 0.4]
+      - [0.4, 1.2]
+
+  signal:
+    mean: [1.8, 1.6]
+    cov:
+      - [0.45, 0.10]
+      - [0.10, 0.35]
+
+  weights:
+    background_mode: radial
+    signal_mode: mild
+
+model:
+  epochs: 20
+  batch_size: 256
+  learning_rate: 0.001
+  hidden_layers: [64, 32, 16]
+
+plots:
+  bins_1d: 40
+  bins_2d: 60
+  n_thresholds: 250
+
+output:
+  dir: outputs
+  save_png: true
