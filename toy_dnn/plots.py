@@ -37,7 +37,7 @@ def _predict_on_grid(model, grid):
     return model.predict(grid, verbose=0).ravel()
 
 
-def make_input_space_figure(X, y, weights, bins_1d=40, bins_2d=60):
+def make_input_space_figure(X, y, weights=None, bins_1d=40, bins_2d=60,signal_scatter_size=18):
     x1 = X[:, 0]
     x2 = X[:, 1]
 
@@ -54,38 +54,73 @@ def make_input_space_figure(X, y, weights, bins_1d=40, bins_2d=60):
         x1[bkg], x2[bkg],
         bins=bins_2d,
         range=[[x1_min, x1_max], [x2_min, x2_max]],
+        cmap="Blues",
         alpha=0.85,
     )
     axes[0, 0].scatter(
-        x1[sig], x2[sig],
-        s=14, facecolors="none", edgecolors="red", linewidths=1.0, label="Signal"
+        x1[sig],
+        x2[sig],
+        s=signal_scatter_size,
+        marker="o",
+        facecolors="none",
+        edgecolors="red",
+        linewidths=1.0,
+        label="Signal"
     )
     axes[0, 0].set_title("Input space: unweighted")
     axes[0, 0].set_xlabel("Feature 1")
     axes[0, 0].set_ylabel("Feature 2")
+    axes[0, 0].set_xlim(x1_min, x1_max)
+    axes[0, 0].set_ylim(x2_min, x2_max)
     axes[0, 0].legend(frameon=False)
     axes[0, 0].grid(alpha=0.25)
     fig.colorbar(h[3], ax=axes[0, 0], label="Background entries")
 
-    # 2D weighted
-    h = axes[0, 1].hist2d(
-        x1[bkg], x2[bkg],
+    # =========================
+    # (0,1) 2D weighted
+    # =========================
+    ax = axes[0, 1]
+
+    h = ax.hist2d(
+        x1[bkg],
+        x2[bkg],
         bins=bins_2d,
         range=[[x1_min, x1_max], [x2_min, x2_max]],
-        weights=weights[bkg],
-        alpha=0.85,
+        weights=None if weights is None else weights[bkg],
+        cmap="Blues",
+        alpha=0.85
     )
-    sig_sizes = 12.0 * (0.6 + 1.8 * weights[sig] / np.max(weights[sig]))
-    axes[0, 1].scatter(
-        x1[sig], x2[sig],
-        s=sig_sizes, facecolors="none", edgecolors="red", linewidths=1.0, label="Signal"
+
+    if weights is None:
+        sig_sizes = np.full(np.sum(sig), signal_scatter_size)
+    else:
+        ws = weights[sig]
+        if np.max(ws) > 0:
+            sig_sizes = signal_scatter_size * (0.6 + 1.8 * ws / np.max(ws))
+        else:
+            sig_sizes = np.full(np.sum(sig), signal_scatter_size)
+
+    ax.scatter(
+        x1[sig],
+        x2[sig],
+        s=sig_sizes,
+        marker="o",
+        facecolors="none",
+        edgecolors="red",
+        linewidths=1.0,
+        label="Signal"
     )
-    axes[0, 1].set_title("Input space: weighted")
-    axes[0, 1].set_xlabel("Feature 1")
-    axes[0, 1].set_ylabel("Feature 2")
-    axes[0, 1].legend(frameon=False)
-    axes[0, 1].grid(alpha=0.25)
-    fig.colorbar(h[3], ax=axes[0, 1], label="Weighted background entries")
+
+    ax.set_title("Input space: weighted")
+    ax.set_xlabel("Feature 1")
+    ax.set_ylabel("Feature 2")
+    ax.set_xlim(x1_min, x1_max)
+    ax.set_ylim(x2_min, x2_max)
+    ax.grid(alpha=0.25)
+    ax.legend(frameon=False)
+
+    cbar = fig.colorbar(h[3], ax=ax)
+    cbar.set_label("Weighted background entries")
 
     # 1D unweighted
     bins1 = np.linspace(x1_min, x1_max, bins_1d + 1)
