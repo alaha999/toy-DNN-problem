@@ -48,16 +48,30 @@ def format_yield_text(results):
 
     return "\n".join(lines)
 
-
 def _significance(S, B, mode="soversqrtb"):
+    S = np.asarray(S, dtype=float)
+    B = np.asarray(B, dtype=float)
+
     if mode == "soversqrtb":
-        return S / np.sqrt(B) if B > 0 else 0.0
+        Z = np.zeros_like(S)
+        mask = B > 0
+        Z[mask] = S[mask] / np.sqrt(B[mask])
+        return Z
+
     if mode == "soversqrtsplusb":
-        return S / np.sqrt(S + B) if (S + B) > 0 else 0.0
+        Z = np.zeros_like(S)
+        mask = (S + B) > 0
+        Z[mask] = S[mask] / np.sqrt(S[mask] + B[mask])
+        return Z
+
     if mode == "asimov":
-        if B > 0 and S > 0:
-            return np.sqrt(2.0 * ((S + B) * np.log(1.0 + S / B) - S))
-        return 0.0
+        Z = np.zeros_like(S)
+        mask = (S > 0) & (B > 0)
+        Z[mask] = np.sqrt(
+            2.0 * ((S[mask] + B[mask]) * np.log(1.0 + S[mask] / B[mask]) - S[mask])
+        )
+        return Z
+
     raise ValueError(f"Unknown significance mode: {mode}")
 
 
@@ -72,21 +86,16 @@ def scan_significance(y_true, y_score, weights=None, n_thresholds=200, mode="sov
 
     thresholds = np.linspace(0.0, 1.0, n_thresholds)
 
-    S_vals = np.zeros_like(thresholds)
-    B_vals = np.zeros_like(thresholds)
-    Z_vals = np.zeros_like(thresholds)
-
     sig_mask = (y_true == 1)
     bkg_mask = (y_true == 0)
 
-    for i, thr in enumerate(thresholds):
-        sel = (y_score >= thr)
-        S = np.sum(weights[sel & sig_mask])
-        B = np.sum(weights[sel & bkg_mask])
+    #Vectorized computation (no loop over thresholds)
+    score_matrix = y_score[:, None] >= thresholds[None, :]
 
-        S_vals[i] = S
-        B_vals[i] = B
-        Z_vals[i] = _significance(S, B, mode=mode)
+    S_vals = np.sum(weights[:, None] * score_matrix * sig_mask[:, None], axis=0)
+    B_vals = np.sum(weights[:, None] * score_matrix * bkg_mask[:, None], axis=0)
+
+    Z_vals = _significance(S_vals, B_vals, mode=mode)
 
     return thresholds, S_vals, B_vals, Z_vals
 

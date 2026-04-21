@@ -1,9 +1,12 @@
 seed: 42
 
 data:
-  n_background: 12000
-  n_signal: 2500
+  n_background: 10000
+  n_signal_main: 950
+  n_signal_tail: 50
   test_size: 0.3
+
+  tail_weight: 15
 
   background:
     mean: [0.0, 0.0]

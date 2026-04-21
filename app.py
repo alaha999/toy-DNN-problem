@@ -222,8 +222,8 @@ with st.sidebar:
         if toy_mode == "HEP tail-enhanced signal":
             st.subheader("HEP tail toy")
             n_background = st.slider("Background events", 1000, 50000, 10000, step=500)
-            n_signal_main = st.slider("Main signal events", 100, 10000, 1000, step=50)
-            n_signal_tail = st.slider("Tail signal events", 20, 2000, 150, step=10)
+            n_signal_main = st.slider("Main signal events", 100, 10000, 950, step=50)
+            n_signal_tail = st.slider("Tail signal events", 20, 2000, 50, step=10)
             tail_weight = st.slider("Tail signal weight", 1.0, 30.0, 15.0, step=1.0)
 
             n_signal = n_signal_main + n_signal_tail
